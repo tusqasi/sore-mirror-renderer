@@ -1,67 +1,37 @@
 class Drone {
-    constructor(startPosition) {
-        this.flag = "";
-        this.velocity = 0;
-        this.acceleration = 0;
-        this.px = 0;
-        this.py = -400;
-        if (startPosition != undefined) {
-            this.position = startPosition;
-        }
-    }
+    constructor(x, y,world) {
+        this.velocity = createVector(0, 1);
+        this.acceleration = createVector(0, 0);
+        this.r = 10;
+        this.angular_velocity = 0;
+        this.angular_acceleration = 0;
+        this.thrust_differential = 0.5; // 0 to 1; 0 -> left; 1 -> right
+        this.max_thrust = 10;
+        this.arm_length = 10;
+        this.world = world;
 
+        if (x == undefined) {
+            x = W / 2 - 100;
+            y = 0;
+        }
+        this.position = createVector(x, y);
+    }
     update() {
-        if (this.position >= GROUND) {
-            this.flag = "ground";
-            // On or below ground
-            this.acceleration = 0;
-            this.position = GROUND + 1;
-            this.velocity = 0;
-        } else {
-            // Above ground
-            this.flag = "above ground";
 
-            this.acceleration += GRAVITY;
-            if (-this.velocity >= terminalVelocity) {
-                this.velocity = -terminalVelocity;
-            } else if (-this.velocity <= -terminalVelocity) {
-                this.velocity = terminalVelocity;
-            }
-            this.velocity += this.acceleration;
-            this.position += this.velocity;
-            fill(0);
-            text("ACCELERATION :" + this.acceleration.toFixed(2), 0, -300);
-            this.acceleration = 0;
+        if (this.position.y < this.world.ground) {
+            this.position.add(this.velocity)
+         
         }
-    }
 
-    propel(t) {
-        this.acceleration -= t;
-        if (this.position > GROUND) {
-            this.position = GROUND - 1;
-        }
-		else
+
+        this.velocity.add(this.acceleration)
+        this.velocity.add(0,this.world.gravity)
+        this.acceleration.mult(0);
     }
-    show_stats() {
-        let pos = 1;
-        let offset = 25;
-        // text("ACCELERATION " + this.acceleration.toFixed(0), px, pos * offset);
-        text(
-            "VELOCITY " + this.velocity.toFixed(1),
-            this.px,
-            ++pos * offset + this.py
-        );
-        text(
-            "POSITION :" + this.position.toFixed(0),
-            this.px,
-            ++pos * offset + this.py
-        );
+    thrust() {
+
     }
-    data() {
-        return {
-            acceleration: this.acceleration,
-            velocity: this.velocity,
-            position: this.position,
-        };
+    draw() {
+        image(drone_image, this.position.x, this.position.y)
     }
 }
