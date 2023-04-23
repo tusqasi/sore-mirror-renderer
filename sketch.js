@@ -7,22 +7,70 @@ let BLACK = [0, 0, 0];
 let thrust = 2;
 let reconnects = 0;
 let socket;
-let GROUND = 0;
+let GROUND = -50;
 let d = new Drone(-400);
 let GRAVITY = 1; // pixels/s^-2
 let OUTSIDE = false;
-let sliderThrust;
+let sliderThrust = 0;
 let droneModel;
 let inconsolataFont;
 
 let terminalVelocity = 100.0;
+const gamepads = {};
+function handleGampad() {
+    const gamepad = navigator.getGamepads()[0];
+    if (!gamepad)
+        // no game pad
+        return;
+    // down button
+    const y1 = gamepad.axes[1];
+    if (y1 < 0) {
+        sliderThrust = Math.pow(2, -y1);
+        // console.log(y1);
+    } else if (y1 > 0) {
+        sliderThrust = -Math.exp(-y1) - 1;
+    } else {
+        sliderThrust = 0;
+    }
+}
+function gamepadHandler(event, connecting) {
+    const gamepad = event.gamepad;
+    // Note:
+    // gamepad === navigator.getGamepads()[gamepad.index]
+
+    if (connecting) {
+        gamepads[gamepad.index] = gamepad;
+        console.info("Connected New gamepad!");
+    } else {
+        delete gamepads[gamepad.index];
+    }
+}
+
+window.addEventListener(
+    "gamepadconnected",
+    (e) => {
+        gamepadHandler(e, true);
+    },
+    false
+);
+window.addEventListener(
+    "gamepaddisconnected",
+    (e) => {
+        gamepadHandler(e, false);
+    },
+    false
+);
 
 function connectWebsocket(url) {
     socket = new WebSocket(url);
     socket.onmessage = function onmessage_callback(message) {
         data = JSON.parse(message.data);
+        console.log(data);
         if (data.propel != undefined) {
             d.propel(data.propel);
+        }
+        if (data.data != undefined) {
+            console.log(data.data);
         }
     };
     socket.onopen = function onopen_callback() {
@@ -49,10 +97,11 @@ function connectWebsocket(url) {
         }, 5000);
     };
 }
-connectWebsocket("wss://InsubstantialRosyApplications.tusqasi.repl.co");
+// connectWebsocket("wss://InsubstantialRosyApplications.tusqasi.repl.co");
+// connectWebsocket("ws://127.0.0.1:6969");
 
 function setup() {
-    sliderThrust = createSlider(1, 50, 30, 5);
+    // sliderThrust = createSlider(1, 50, 30, 5);
     createCanvas(W, H, WEBGL);
     // createCanvas(W, H);
 
@@ -69,6 +118,7 @@ function draw() {
     if (keyIsDown(UP_ARROW)) {
         d.propel(thrust);
     }
+    d.propel(sliderThrust);
     orbitControl();
     debugMode();
     push();
@@ -88,6 +138,7 @@ function draw() {
     fill(0);
     d.show_stats();
     fill(255);
+    handleGampad();
 }
 
 function keyPressed() {
