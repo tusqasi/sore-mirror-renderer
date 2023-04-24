@@ -1,13 +1,8 @@
 class Drone {
-    constructor(x, y,world) {
-        this.velocity = createVector(0, 1);
+    constructor(x, y, world) {
+        this.velocity = createVector(0, 0);
         this.acceleration = createVector(0, 0);
-        this.r = 10;
-        this.angular_velocity = 0;
-        this.angular_acceleration = 0;
-        this.thrust_differential = 0.5; // 0 to 1; 0 -> left; 1 -> right
-        this.max_thrust = 10;
-        this.arm_length = 10;
+        this.max_velocity = 10;
         this.world = world;
 
         if (x == undefined) {
@@ -16,22 +11,29 @@ class Drone {
         }
         this.position = createVector(x, y);
     }
-    update() {
+    update(thrust) {
+        
+        // bounce back
+        // slow down
+        // not go below ground
+        this.acceleration.add(0, thrust);
+        this.velocity.add(this.acceleration);
+        this.velocity.add(0, this.world.gravity);
+        this.acceleration.mult(0);
+       
 
-        if (this.position.y < this.world.ground) {
-            this.position.add(this.velocity)
-         
+        if (this.position.y >= this.world.ground) {
+            // debugger;
+            // Below ground
+            this.velocity.mult(-0.2);
+            this.position.y = this.world.ground - 1;
+            
         }
 
-
-        this.velocity.add(this.acceleration)
-        this.velocity.add(0,this.world.gravity)
-        this.acceleration.mult(0);
-    }
-    thrust() {
+        this.position.add(this.velocity);
 
     }
     draw() {
-        image(drone_image, this.position.x, this.position.y)
+        image(drone_image, this.position.x, this.position.y);
     }
 }
