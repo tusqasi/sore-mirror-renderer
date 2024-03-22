@@ -25,24 +25,6 @@ class Drone {
     }
     update(thrust) {
         
-        // bounce back
-        // slow down
-        // not go below ground
-        this.acceleration.add(0, thrust);
-        this.velocity.add(this.acceleration);
-        this.velocity.add(0, this.world.gravity);
-        this.acceleration.mult(0);
-       
-
-        if (this.position.y >= this.world.ground) {
-            // debugger;
-            // Below ground
-            this.velocity.mult(-0.2);
-            this.position.y = this.world.ground - 1;
-            
-        }
-
-        this.position.add(this.velocity);
 
     }
     draw() {

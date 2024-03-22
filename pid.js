@@ -21,14 +21,12 @@ class PID {
 	 * @param {number} kd
 	 * @param {number} setpoint
 	 * @param {[number, number]} limits
-	 * @param {CallableFunction} error_func 
-	 */ constructor(kp, ki, kd, setpoint, limits, error_func) {
+	 */ constructor(kp, ki, kd, setpoint, limits) {
 		this.kp = kp;
         this.ki = ki;
         this.kd = kd;
         this.limits = limits;
         this.setpoint = setpoint;
-		this.error_func = error_func;
         this.last_error = 0;
         this.last_integral = 0;
     }
@@ -38,8 +36,7 @@ class PID {
 	 * @param { number} input
 	 */
     update(input) {
-        const error = this.error_func(this.setpoint, input)
-
+        const error = this.setpoint - input
         const propotional = error;
         const integral = this.last_integral + error;
         const derivative = error - this.last_error ;
