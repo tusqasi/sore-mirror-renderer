@@ -6,11 +6,11 @@
  * @param {[number, number]} limits 
  */
 function clamp(input, limits) {
-    if (limits == undefined) return input;
-    const [min, max] = limits;
-    if (input > max) return max;
-    else if (input < min) return min;
-    return input;
+	if (limits == undefined) return input;
+	const [min, max] = limits;
+	if (input > max) return max;
+	else if (input < min) return min;
+	return input;
 }
 class PID {
 	/**
@@ -23,29 +23,30 @@ class PID {
 	 * @param {[number, number]} limits
 	 */ constructor(kp, ki, kd, setpoint, limits) {
 		this.kp = kp;
-        this.ki = ki;
-        this.kd = kd;
-        this.limits = limits;
-        this.setpoint = setpoint;
-        this.last_error = 0;
-        this.last_integral = 0;
-    }
+		this.ki = ki;
+		this.kd = kd;
+		this.limits = limits;
+		this.setpoint = setpoint;
+		this.last_error = 0;
+		this.last_integral = 0;
+	}
 	/**
 	 * Updates the controller
 	 *
 	 * @param { number} input
+	 * @param { number} dt
 	 */
-    update(input) {
-        const error = this.setpoint - input
-        const propotional = error;
-        const integral = this.last_integral + error;
-        const derivative = error - this.last_error ;
-        this.last_error = error;
-        this.last_integral = integral;
-		const output = this.kp * propotional + this.ki * integral + this.kd * derivative;
-        return clamp(
+	update(input, dt) {
+		const error = this.setpoint - input
+		const propotional = error;
+		const integral = this.last_integral + error;
+		const derivative = error - this.last_error;
+		this.last_error = error;
+		this.last_integral = integral;
+		const output = this.kp * propotional + this.ki * integral*dt + this.kd * derivative/dt;
+		return clamp(
 			output,
-            this.limits
-        );
-    }
+			this.limits
+		);
+	}
 }

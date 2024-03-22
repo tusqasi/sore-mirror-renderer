@@ -13,38 +13,46 @@ const width = 800,
 let ground;
 let engine;
 
-const max_reconnects = 10;
-let reconnects = 0;
-let socket;
-
 let drone;
-let drone_swarm = [];
+
+/**
+ * @type {{ drone: Matter.Body, controller: { position_controller: PID, altitude_controller: PID } }[]}
+ */
+let drone_swarm;
+
+/**
+ * Returns a drone swarm
+ * @param {number} n 
+ */
 function make_swarm(n) {
 	let res = [];
 	for (let i = 0; i < n; i++) {
-		let drone = Bodies.rectangle(
+		/**
+		 * @type {Matter.Body}
+		 */
+		let drone = Bodies.circle(
 			Math.floor(Math.random() * width),
 			Math.floor(Math.random() * height),
-			50,
-			50, {
-				friction: 0.1,
-				restitution: 0.1,
-				isStatic: false,
-			}
+			// 20,
+			20, {
+			friction: 0.1,
+			restitution: 0.1,
+			isStatic: false,
+		}
 		);
 
 		drone.w = 50;
 		drone.h = 50;
 		res.push({
-				drone: drone,
-				controller: {
-					position_controller: new PID(0.0002, 0.0, 0.0011, Math.floor(Math.random() * width), [-0.05, 0.05]),
-					altitude_controller: new PID(0.0002, 0.0, 0.0011, Math.floor(Math.random() * height), [-0.05, 0.05]),
-				},
-			}
+			drone: drone,
+			controller: {
+				position_controller: new PID(0.00002, 0.0, 0.002, random(90, width - 90), [-0.1, 0.1]),
+				altitude_controller: new PID(0.00002, 0.00000001, 0.002, random(90, height - 90), [-0.1, 0.1]),
+			},
+		}
 		);
 	}
-	drone_swarm = res;
+	return res;
 }
 
 let drone_image;
@@ -64,12 +72,8 @@ let position_controller;
 function preload() {
 	drone_image = loadImage("assets/drone.png")
 }
-
 function setup() {
-	createCanvas(width, height);
-	setpoint = createVector(100, 100);
-	altitude_controller = new PID(0.00020, 0.000000000, 0.0011, setpoint.y, [-0.05, 0.05]);
-	position_controller = new PID(0.00020, 0.000000000, 0.0011, setpoint.x, [-0.05, 0.05]);
+	createCanvas(width + 500, height);
 	engine = Engine.create();
 	engine.gravity.y = 0.8;
 
@@ -80,49 +84,48 @@ function setup() {
 	});
 	ground.w = width + 100;
 	ground.h = 100;
+	drone_swarm = make_swarm(1);
 
-	drone = Bodies.rectangle(400, 40, 50, 50, {
-		friction: 0.1,
-		restitution: 0.1,
-		isStatic: false,
-	});
-
-	drone.w = 50;
-	drone.h = 50;
-	Composite.add(engine.world, [drone, ground]);
+	const drones = drone_swarm.map((d) => d.drone);
+	Composite.add(engine.world, [...drones, ground]);
 
 	drone_image.resize(100, 100)
 }
 
-let start_time = Date.now();
-
-let x = -1;
-let y = -1;
-
+let x = width;
+let plot = [];
 function draw() {
-	let force_y = altitude_controller.update(drone.position.y);
-	let force_x = position_controller.update(drone.position.x);
 
 	Engine.update(engine);
-	Body.applyForce(drone, drone.position, Vector.create(force_x, force_y))
-
 	background("#eee");
+	for (let i = 0; i < drone_swarm.length; i++) {
+		const { drone, controller } = drone_swarm[i];
+		const force_y = controller.altitude_controller.update(drone.position.y, deltaTime);
+		const force_x = controller.position_controller.update(drone.position.x, deltaTime);
 
-	push();
-	fill("black");
-	rect(ground.position.x, ground.position.y, ground.w, ground.h);
-	pop();
-	image(drone_image, drone.position.x - drone_image.width / 2, drone.position.y - drone_image.height / 2);
-	fill("blue")
-	circle(drone.position.x, drone.position.y, 10);
-	if ((Date.now() - start_time) > 4000) {
-		start_time = Date.now();
-		x = floor(random(50, height - 50));
-		y = floor(random(50, width - 50));
-		altitude_controller.setpoint = x;
-		position_controller.setpoint = y;
+		Body.applyForce(drone, drone.position, Vector.create(0, force_y));
+		// circle(drone.drone.position.x, drone.drone.position.y, 40);
+		image(drone_image, drone.position.x - drone_image.width / 2, drone.position.y - drone_image.height / 2);
+		if (x > width + 500) {
+			plot = [];
+			x = width;
+		}
+		// strokeWeight(3)
+		// point(x,drone.position.y);
+		stroke("red")
+		line(width, controller.altitude_controller.setpoint, width + 500, controller.altitude_controller.setpoint);
+		plot.push(drone.position.y);
 	}
-	stroke("red");
-	fill("red");
-	circle(position_controller.setpoint, altitude_controller.setpoint, 10);
+	noFill();
+	stroke("black")
+	beginShape();
+	strokeWeight(4)
+	for (let i = 0; i < plot.length; i++) {
+		vertex(i + width, plot[i]);
+	}
+	endShape();
+	x++;
+	fill("white");
+	rect(ground.position.x, ground.position.y, ground.w, ground.h);
+	// image(drone_image, drone.position.x - drone_image.width / 2, drone.position.y - drone_image.height / 2);
 }
