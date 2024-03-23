@@ -29,6 +29,7 @@ class PID {
 		this.setpoint = setpoint;
 		this.last_error = 0;
 		this.last_integral = 0;
+		this.last_input = 0;
 	}
 	/**
 	 * Updates the controller
@@ -37,16 +38,21 @@ class PID {
 	 * @param { number} dt
 	 */
 	update(input, dt) {
+
 		const error = this.setpoint - input
 		const propotional = error;
 		const integral = this.last_integral + error;
-		const derivative = error - this.last_error;
+
+		// const derivative = error - this.last_error;
+
+		const d_input = input - this.last_input;
 		this.last_error = error;
 		this.last_integral = integral;
-		const output = this.kp * propotional + this.ki * integral*dt + this.kd * derivative/dt;
-		return clamp(
-			output,
-			this.limits
-		);
+		this.last_input = input;
+
+		// const output = clamp(this.kp * propotional + this.ki * integral  - this.kd * d_input  , this.limits);
+		const output = clamp(this.kp * propotional + this.ki * integral * dt - this.kd * d_input / dt, this.limits);
+
+		return output;
 	}
 }
