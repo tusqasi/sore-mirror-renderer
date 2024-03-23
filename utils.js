@@ -8,6 +8,7 @@ let max_reconnects = 5;
 */
 function connectWebsocket(url) {
 	let socket = new WebSocket(url);
+
 	// socket.onmessage = function onmessage_callback(message) {
 	// 	if (message.data == undefined) {
 	// 		return;
